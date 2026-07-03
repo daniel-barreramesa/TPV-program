@@ -1,6 +1,7 @@
 #include "raylib.h"
 #include "rlImGui.h"
 #include "imgui.h"
+#include "misc/cpp/imgui_stdlib.h"
 
 #include<vector>
 
@@ -28,9 +29,18 @@ char customer[256] = "";
 const int MinFIl = 16;
 int numFilas = std::max((int)sellervec.size(), MinFIl);
 std::vector<Product> products_selected;
-
+std::vector<std::vector<std::string>> productsbuffer = {};;
+std::vector<const char*> paymentmethod = {
+    "Efectivo",
+    "Tarjeta",
+    "Presupuesto",
+    "Otro",
+};
+static int paymentmethodselect = 0;
 
 //GLOBAL VARIABLES END
+
+
 
 void drawgui(Texture2D &tpvim){
   ImGui::StyleColorsLight();
@@ -66,9 +76,15 @@ void drawgui(Texture2D &tpvim){
   ImGui::SetNextItemWidth(400);
   ImGui::InputText("Cliente", customer, 256);
 
+  ImGui::BeginChild("ZonaProductos", ImVec2(0, 500), true); //TABLA
   ImGui::Spacing();
   ImGui::Spacing();
-  if (ImGui::BeginTable("Tabla", 7, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg)){
+  float total_sum = 0.0;
+  while (productsbuffer.size() < MinFIl) {
+    productsbuffer.push_back(std::vector<std::string>(7));
+  }
+  if (ImGui::BeginTable("Productos", 7,
+    ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg)) {
     ImGui::TableSetupColumn("Id");
     ImGui::TableSetupColumn("Nombre");
     ImGui::TableSetupColumn("Descripción");
@@ -78,42 +94,55 @@ void drawgui(Texture2D &tpvim){
     ImGui::TableSetupColumn("Total");
     ImGui::TableHeadersRow();
 
-    for (int i = 0; i < numFilas; i++)
-    {
-      if (i < sellervec.size()){
-        ImGui::TableNextRow();
+    for (int fila = 0; fila < productsbuffer.size(); fila++) {
+      ImGui::TableNextRow();
+      for (int col = 0; col < 7; col++) {
+        ImGui::TableNextColumn();
 
-        ImGui::TableNextColumn();
-        ImGui::Text("%s", sellervec[i]);
+        std::string id = "##" + std::to_string(fila) + "_" + std::to_string(col);
 
-        ImGui::TableNextColumn();
-        ImGui::Text("%d", sellervec[i]);
-
-        ImGui::TableNextColumn();
-        ImGui::Text("%s", sellervec[i]);
-      }
-      else{
-        // Filas vacías
-        ImGui::TableNextColumn();
-        ImGui::TextUnformatted("");
-        ImGui::TableNextColumn();
-        ImGui::TextUnformatted("");
-        ImGui::TableNextColumn();
-        ImGui::TextUnformatted("");
-        ImGui::TableNextColumn();
-        ImGui::TextUnformatted("");
-        ImGui::TableNextColumn();
-        ImGui::TextUnformatted("");
-        ImGui::TableNextColumn();
-        ImGui::TextUnformatted("");
-        ImGui::TableNextColumn();
-        ImGui::TextUnformatted("");
+        ImGui::SetNextItemWidth(-FLT_MIN); // Ocupa todo el ancho de la celda
+        ImGui::InputText(id.c_str(), &productsbuffer[fila][col]);
+        if(col == 6 && productsbuffer[fila][col] != "")
+          total_sum = total_sum + std::stof(productsbuffer[fila][col]);
       }
     }
+  ImGui::EndTable();
+  }
+  ImGui::Spacing();
+  ImGui::Spacing();
+  if(ImGui::Button("+"))
+    productsbuffer.push_back(std::vector<std::string>(7));
+  ImGui::SameLine();
+  if(ImGui::Button("-"))
+    productsbuffer.pop_back();
+  ImGui::SameLine(0.0f, 960.0f);
+  ImGui::Text("Total %.2f €",total_sum);
+  ImGui::EndChild();
 
-    ImGui::EndTable();
-}
+  ImGui::Spacing();
+  ImGui::Spacing();
+  ImGui::PushStyleColor(ImGuiCol_Button,        ImVec4(0.85f, 0.20f, 0.20f, 1.0f));
+  ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.95f, 0.30f, 0.30f, 1.0f));
+  ImGui::PushStyleColor(ImGuiCol_ButtonActive,  ImVec4(0.75f, 0.10f, 0.10f, 1.0f));
+  if(ImGui::Button("Cancelar")){}
+  ImGui::PopStyleColor(3);
+  ImGui::SameLine();
+  ImGui::PushStyleColor(ImGuiCol_Button,        IM_COL32(86, 244, 113, 255));
+  ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IM_COL32(76, 224, 143, 255));
+  ImGui::PushStyleColor(ImGuiCol_ButtonActive,  IM_COL32(39, 174, 96, 255));
+  if (ImGui::Button("Guardar Borrador")){}
+  ImGui::PopStyleColor(3);
+  ImGui::SameLine(0.0f, 500.0f);
+  ImGui::SetNextItemWidth(120);
+  ImGui::Combo("Método de pago", &paymentmethodselect, paymentmethod.data(), paymentmethod.size());
+  if(invoicetypeselect == 4)
+    paymentmethodselect = 2;
+  if(invoicetypeselect == 3)
+    paymentmethodselect = 3;
 
+  ImGui::SameLine(0.0f, 100.0f);
+  if(ImGui::Button("TERMINADO")) {}
   ImGui::End();
   }
   

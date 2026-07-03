@@ -4,7 +4,7 @@
 
 // Each product will have tags and id, those features will belong to vectors in
 // the main program so the browser can work much faster.
-
+#pragma once
 class Product{
   public:
     Product(std::string, unsigned, float, std::string);

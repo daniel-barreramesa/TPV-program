@@ -6,9 +6,12 @@
 #include<vector>
 
 #include"Objects/products.h"
+#include"Objects/user.h"
+#include"load_functions.h"
 
 // GLOBAL VARIABLES
-bool tpv = true;
+bool tpv = false;
+bool userwindow = false;
 char local[4] = "";
 char almacen[4] = "";
 std::vector<const char*> sellervec = {
@@ -37,12 +40,20 @@ std::vector<const char*> paymentmethod = {
     "Otro",
 };
 static int paymentmethodselect = 0;
+char clientname[256] = "";
+char clientdni[50] = "";
+char clientemail[256] = "";
+char clientphone[50] = "";
+char clientnif[50] = "";
+char clientadress[256] = "";
+char clientnotes[256] = "";
+char clientid[20] = "";
 
 //GLOBAL VARIABLES END
 
 
 
-void drawgui(Texture2D &tpvim){
+void drawgui(Texture2D &tpvim, Texture2D &userim){
   ImGui::StyleColorsLight();
   bool menu = true;
 
@@ -76,6 +87,7 @@ void drawgui(Texture2D &tpvim){
   ImGui::SetNextItemWidth(400);
   ImGui::InputText("Cliente", customer, 256);
 
+  //TODO: The table crashes when characters are written
   ImGui::BeginChild("ZonaProductos", ImVec2(0, 500), true); //TABLA
   ImGui::Spacing();
   ImGui::Spacing();
@@ -101,7 +113,7 @@ void drawgui(Texture2D &tpvim){
 
         std::string id = "##" + std::to_string(fila) + "_" + std::to_string(col);
 
-        ImGui::SetNextItemWidth(-FLT_MIN); // Ocupa todo el ancho de la celda
+        ImGui::SetNextItemWidth(-FLT_MIN);
         ImGui::InputText(id.c_str(), &productsbuffer[fila][col]);
         if(col == 6 && productsbuffer[fila][col] != "")
           total_sum = total_sum + std::stof(productsbuffer[fila][col]);
@@ -146,7 +158,63 @@ void drawgui(Texture2D &tpvim){
   ImGui::End();
   }
   
-  // MENU
+  //USER MENU
+  if(userwindow){
+  ImGui::SetNextWindowPos(ImVec2(100, 100), ImGuiCond_Once);
+  ImGui::SetNextWindowSize(ImVec2(1000, 700), ImGuiCond_Once);
+  ImGui::Begin("Clientes", &userwindow);
+
+  ImGui::SetNextItemWidth(300);
+  ImGui::InputText("Nombre", clientname, 256);
+  ImGui::SameLine();
+  ImGui::SetNextItemWidth(100);
+  ImGui::InputText("DNI", clientdni, 50);
+  ImGui::SameLine(0.0f, 300.0f);
+  ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 0, 255, 255));
+  ImGui::Text("Gestor Clientes");
+  ImGui::PopStyleColor();
+
+  ImGui::Spacing();
+  ImGui::Spacing();
+  ImGui::SetNextItemWidth(350);
+  ImGui::InputText("email", clientemail, 256);
+  ImGui::SameLine();
+  ImGui::SetNextItemWidth(100);
+  ImGui::InputText("teléfono", clientphone, 50);
+  ImGui::SameLine();
+  ImGui::SetNextItemWidth(100);
+  ImGui::InputText("NIF", clientnif, 50);
+
+  ImGui::Spacing();
+  ImGui::Spacing();
+  ImGui::SetNextItemWidth(450);
+  ImGui::InputText("dirección", clientadress, 256);
+
+  ImGui::Spacing();
+  ImGui::Spacing();
+  ImGui::SetNextItemWidth(450);
+  ImGui::InputText("Anotaciones", clientnotes, 256);
+  ImGui::SameLine();
+  ImGui::SetNextItemWidth(50);
+  ImGui::InputText("ID (solo búsqueda)", clientid, 20);
+
+  ImGui::Spacing();
+  ImGui::Spacing();
+  if(ImGui::Button("CREAR")) { //creates a new customer with the data
+    //TODO: Check if the client already exists
+    clientlist.push_back({clientname, clientdni, clientphone, clientemail, clientnif, clientadress, clientnotes});
+    save_client_list();
+  }
+  ImGui::SameLine(0.0f, 30.0f);
+  if(ImGui::Button("BUSCAR")) {}
+  ImGui::SameLine(0.0f, 700.0f);
+  if(ImGui::Button("ELIMINAR")) {}
+
+  ImGui::End();
+  }
+
+
+  // LATERAL MENU
   Vector2 size = {80.0f, 80.0f};
   ImGui::SetNextWindowPos(ImVec2(GetScreenWidth()-100, 0), ImGuiCond_Always);
   ImGui::SetNextWindowSize(ImVec2(130, 1000), ImGuiCond_Once);
@@ -158,6 +226,10 @@ void drawgui(Texture2D &tpvim){
   if (rlImGuiImageButtonSize("tpv",&tpvim, size))
   {
     tpv = true;
+  }
+  if (rlImGuiImageButtonSize("people",&userim, size))
+  {
+    userwindow = true;
   }
   ImGui::PopStyleVar();
   ImGui::PopStyleColor(3);
@@ -178,7 +250,9 @@ int main()
 
   ImGui::GetIO().FontGlobalScale = 1.16f;
 
+  load_client_list();
   Texture2D tpvim = LoadTexture("../TPV-program/images/TPV.png");
+  Texture2D userim = LoadTexture("../TPV-program/images/People.png");
   while (!WindowShouldClose())
   {
     BeginDrawing(); //raylib
@@ -186,7 +260,7 @@ int main()
 
 
     rlImGuiBegin(); //imgui
-    drawgui(tpvim);
+    drawgui(tpvim, userim);
     rlImGuiEnd(); // final imgui
 
     EndDrawing();
